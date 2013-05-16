@@ -43,7 +43,7 @@ with_stemmer=True
 pid_np_only=False
 
 
-verbose_inference=False
+verbose_inference=True
 
 # STRING_W=0.30
 # FILTER_THR=0.5
@@ -377,23 +377,21 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 
 	## We use this vec to annotate the background graph
 	if (SCORE_WITH_PROT and seed_doc_percent==0) or (len(prior_refs)>0):
-		local_hprd.score_edges_with_doc_sim(DOC_SIM)
+		print "mdata Scoring"
+		local_hprd.score_edges_with_doc_sim(DOC_SIM) # add the confidence mData
 
-	# ## annotation
+	#### annotation and MST 
+
+	if prior_graph!=None:
+		shov=prior_graph
+
 	for e in local_hprd.edges_iter(data=True):
 		src,tgt,mdata=e
 		if (SCORE_WITH_PROT and seed_doc_percent==0) or (len(prior_refs)>0):
 			w=int(MST_SCORE_LSI_WEIGHT-MST_SCORE_LSI_WEIGHT*max(0,mdata["confidence"])) #is confidence always 0<= <= 1? 
 		else:
 			w=BACKGROUND_DEFAULT_WEIGHT
-		# String scoring is now performed downstream, and we keep two versions of the prior graph, one with and one without string scoring
-		# if WITH_COMBINED_MST:
-		# 	if src in STRING and tgt in STRING[src]:
-		# 		w=w+STRING_MST_W*STRING[src][tgt]["weight"]
-		# 	else:
-		# 		w=w+STRING_MST_W*STRING_DEFAULT_SCORE
 		local_hprd[src][tgt]["weight"]=w
-
 
 	if prior_graph==None:
 		## The prior is then
@@ -403,25 +401,39 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 			prior_graph,gL,shov=recalg.mst_of_g(local_hprd,prior_prots,weighted=False,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
 
 
-		# Add the STRING score and compute another prior graph
-		if WITH_COMBINED_MST:
-			local_hprd_with_STRING=copy.deepcopy(local_hprd)
-			for e in local_hprd_with_STRING.edges_iter(data=True):
-				src,tgt,mdata=e
-				if src in STRING and tgt in STRING[src]:
-					w=w+STRING_MST_W*STRING[src][tgt]["weight"]
-				else:
-					w=w+STRING_MST_W*STRING_DEFAULT_SCORE
-			## The prior is then
-			if MST_ON_HPRD_WEIGHTED:
-				prior_graph_with_STRING,gL,shov=recalg.mst_of_g(local_hprd_with_STRING,prior_prots,weighted=True,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
+
+	# Add the STRING score and compute another prior graph
+	if WITH_COMBINED_MST:
+		local_hprd_with_STRING=copy.deepcopy(local_hprd)
+
+		for e in local_hprd_with_STRING.edges_iter(data=True):
+			src,tgt,mdata=e
+			if (SCORE_WITH_PROT and seed_doc_percent==0) or (len(prior_refs)>0):
+				w=int(MST_SCORE_LSI_WEIGHT-MST_SCORE_LSI_WEIGHT*max(0,mdata["confidence"])) #is confidence always 0<= <= 1? 
 			else:
-				prior_graph_with_STRING,gL,shov=recalg.mst_of_g(local_hprd_with_STRING,prior_prots,weighted=False,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
-	else:
-		shov=prior_graph
+				w=BACKGROUND_DEFAULT_WEIGHT
+			if src in STRING and tgt in STRING[src]:
+				w=w+STRING_MST_W*STRING[src][tgt]["weight"]
+			else:
+				w=w+STRING_MST_W*STRING_DEFAULT_SCORE
+			local_hprd_with_STRING[src][tgt]["weight"]=w
+		## And the second prior with STRING is then
+		if MST_ON_HPRD_WEIGHTED:
+			prior_graph_with_STRING,gL,shov=recalg.mst_of_g(local_hprd_with_STRING,prior_prots,weighted=True,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
+		else:
+			prior_graph_with_STRING,gL,shov=recalg.mst_of_g(local_hprd_with_STRING,prior_prots,weighted=False,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
 
+	print local_hprd.edges(data=True)[1:5]
+	print local_hprd_with_STRING.edges(data=True)[1:5]
+	print nx.average_clustering(local_hprd_with_STRING)
+	print nx.average_clustering(local_hprd)
+	print len(prior_graph.references())
+	print len(prior_graph_with_STRING.references())
+	print "PRIOR",helpers.score_graph(prior_graph,reference_pw)
+	print "PRIOR WITH STRING",helpers.score_graph(prior_graph_with_STRING,reference_pw)
+	print "STRING Only refs",set(prior_graph_with_STRING.references()).difference(set(prior_graph.references()))
 
-
+	# return local_hprd,local_hprd_with_STRING,prior_graph,prior_graph_with_STRING
 
 
 
@@ -430,7 +442,6 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 	#Save the prior graph
 	mst_graph=copy.copy(prior_graph)
 
-	print "PRIOR",helpers.score_graph(prior_graph,reference_pw)
 
 	# Rec variant
 	rp500CCString=None
@@ -491,8 +502,8 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 			store_counts_long_format(cp500All,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
 
 
-		print "all %d prior refs, with STRING"%(len(prior_graph.references()))
-		rp500AllString,cp500AllString=recalg.rocSimGraph(lsi,prior_graph_with_STRING.references(),reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
+		print "all %d prior refs, with STRING"%(len(prior_graph_with_STRING.references()))
+		rp500AllString,cp500AllString=recalg.rocSimGraph(lsi,prior_graph_with_STRING.references(),reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 		if store:
 			store_counts(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
 			store_counts_long_format(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
@@ -523,16 +534,25 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 		print "Avg annotation",avg_n_annotations
 		if avg_n_annotations >= FILTER_THR_AVG_ANNOT:
 			best_cluster_filter,clusters_filter=select_best_cluster_filtering(prior_graph,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
-			best_cluster_filter_with_STRING,clusters_filter=select_best_cluster_filtering(prior_graph_with_STRING,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
 			
 			print "best %d clusters_filter (out of %d), no combination"%(len(best_cluster_filter),len(prior_graph.references()))
 			rp500CCF,cp500CCF=recalg.rocSimGraph(lsi,best_cluster_filter,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,combine_weight=None, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 
-			print "best %d clusters_filter (out of %d), combined with STRING"%(len(best_cluster_filter),len(prior_graph.references()))
-			rp500CCFString,cp500CCFString=recalg.rocSimGraph(lsi,best_cluster_filter_with_STRING,reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph_with_STRING,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 		else:
 			print "No clustering needed,using the %d refs"%(len(prior_graph.references()))
 			rp500CCF,cp500CCF=rp500All,cp500All
+			rp500CCFString,cp500CCFString=rp500AllString,cp500AllString
+
+
+		# For the STRING Setup
+		avg_n_annotations_string=scipy.average(sorted(map(lambda x:len(x[2]["refs"]), prior_graph_with_STRING.edges(data=True))))
+		print "[STRING] Avg annotation",avg_n_annotations_string
+		if avg_n_annotations_string >= FILTER_THR_AVG_ANNOT:
+			best_cluster_filter_with_STRING,clusters_filter=select_best_cluster_filtering(prior_graph_with_STRING,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
+			print "best %d clusters_filter (out of %d), combined with STRING"%(len(best_cluster_filter_with_STRING),len(prior_graph_with_STRING.references()))
+			rp500CCFString,cp500CCFString=recalg.rocSimGraph(lsi,best_cluster_filter_with_STRING,reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph_with_STRING,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
+		else:
+			print "[STRING] No clustering needed,using the %d refs"%(len(prior_graph_with_STRING.references()))
 			rp500CCFString,cp500CCFString=rp500AllString,cp500AllString
 
 		if store:
