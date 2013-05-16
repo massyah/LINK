@@ -1,0 +1,241 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      7185,        232]
+NotebookOptionsPosition[      6303,        197]
+NotebookOutlinePosition[      6659,        213]
+CellTagsIndexPosition[      6616,        210]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"coords", "=", 
+   RowBox[{
+   "Import", "[", 
+    "\"\</Users/hayssam/Documents/ISOP/SACE analysis/prior_coords.tsv\>\"", 
+    "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"clusterables", "=", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"#", "[", 
+        RowBox[{"[", 
+         RowBox[{"3", ";;"}], "]"}], "]"}], "\[Rule]", 
+       RowBox[{"#", "[", 
+        RowBox[{"[", 
+         RowBox[{";;", "2"}], "]"}], "]"}]}], ")"}], "&"}], "/@", " ", 
+    "coords"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"clusts", "=", 
+   RowBox[{"FindClusters", "[", 
+    RowBox[{"clusterables", ",", 
+     RowBox[{"DistanceFunction", "\[Rule]", "CosineDistance"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Length", "[", "clusts", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Tally", "/@", " ", 
+  RowBox[{"clusts", "[", 
+   RowBox[{"[", 
+    RowBox[{"All", ",", "All", ",", "1"}], "]"}], "]"}]}]}], "Input",
+ CellChangeTimes->{{3.537865787410408*^9, 3.5378658122695436`*^9}, {
+  3.537866647578244*^9, 3.537866670728478*^9}, {3.538130336674635*^9, 
+  3.5381303640483513`*^9}, {3.538130492933131*^9, 3.538130523480527*^9}}],
+
+Cell[BoxData["1"], "Output",
+ CellChangeTimes->{{3.538130494472952*^9, 3.53813052429626*^9}, 
+   3.538131484634933*^9, 3.538133699975156*^9}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"0", ",", "20"}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"1", ",", "6"}], "}"}]}], "}"}], "}"}]], "Output",
+ CellChangeTimes->{{3.538130494472952*^9, 3.53813052429626*^9}, 
+   3.538131484634933*^9, 3.538133699977887*^9}]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Force", " ", "at", " ", "least", " ", "two", " ", "clusters"}], 
+   " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"clusts", "=", "\[IndentingNewLine]", 
+    RowBox[{"If", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Length", "[", "clusts", "]"}], "\[Equal]", "1"}], ",", 
+      RowBox[{"FindClusters", "[", 
+       RowBox[{"clusterables", ",", "2", ",", 
+        RowBox[{"DistanceFunction", "\[Rule]", "CosineDistance"}]}], "]"}], 
+      ",", "\[IndentingNewLine]", "clusts"}], "]"}]}], ";"}]}]], "Input",
+ CellChangeTimes->{{3.537865787410408*^9, 3.5378658122695436`*^9}, {
+   3.537866647578244*^9, 3.537866670728478*^9}, {3.538130336674635*^9, 
+   3.538130418303196*^9}, 3.5381337074177933`*^9}],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.5381337091126537`*^9, 3.5381337097468243`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Export", "[", 
+  RowBox[{"\"\<clusters.tsv\>\"", ",", 
+   RowBox[{"clusts", "[", 
+    RowBox[{"[", 
+     RowBox[{"All", ",", "All", ",", "2"}], "]"}], "]"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.537865787410408*^9, 3.5378658122695436`*^9}, {
+   3.537866647578244*^9, 3.537866670728478*^9}, {3.538130336674635*^9, 
+   3.538130418303196*^9}, 3.5381337074177933`*^9}],
+
+Cell[BoxData["\<\"clusters.tsv\"\>"], "Output",
+ CellChangeTimes->{3.538130419022085*^9, 3.538130458317617*^9}]
+}, Open  ]],
+
+Cell["This is the number of true references in the set", "Text",
+ CellChangeTimes->{{3.537865879767664*^9, 3.537865886189198*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"clusterables", "=", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"#", "[", 
+        RowBox[{"[", 
+         RowBox[{"3", ";;"}], "]"}], "]"}], "\[Rule]", 
+       RowBox[{"#", "[", 
+        RowBox[{"[", 
+         RowBox[{";;", "2"}], "]"}], "]"}]}], ")"}], "&"}], "/@", " ", 
+    "coords"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.5378658464077597`*^9, 3.5378658918721313`*^9}, {
+   3.5378662475197144`*^9, 3.5378662578080273`*^9}, 3.53786665994158*^9}],
+
+Cell["In any number of clusters", "Text",
+ CellChangeTimes->{{3.537866084034994*^9, 3.537866087705099*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"clusts", "=", 
+   RowBox[{"FindClusters", "[", 
+    RowBox[{"clusterables", ",", 
+     RowBox[{"DistanceFunction", "\[Rule]", "CosineDistance"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Tally", "/@", " ", 
+  RowBox[{"clusts", "[", 
+   RowBox[{"[", 
+    RowBox[{"All", ",", "All", ",", "1"}], "]"}], "]"}]}]}], "Input",
+ CellChangeTimes->{{3.537866100462659*^9, 3.5378661005886297`*^9}, {
+  3.53786626092699*^9, 3.537866270766254*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"0", ",", "62"}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"1", ",", "14"}], "}"}]}], "}"}], "}"}]], "Output",
+ CellChangeTimes->{{3.5378660958440027`*^9, 3.5378661020806704`*^9}, 
+   3.537866272868208*^9, 3.53813000674472*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"clusts", "=", 
+   RowBox[{"FindClusters", "[", 
+    RowBox[{"clusterables", ",", "2", ",", 
+     RowBox[{"DistanceFunction", "\[Rule]", "CosineDistance"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Tally", "/@", " ", 
+  RowBox[{"clusts", "[", 
+   RowBox[{"[", 
+    RowBox[{"All", ",", "All", ",", "1"}], "]"}], "]"}]}]}], "Input",
+ CellChangeTimes->{{3.537866100462659*^9, 3.5378661005886297`*^9}, {
+  3.53786626092699*^9, 3.537866270766254*^9}, {3.538130024325925*^9, 
+  3.538130024532021*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"0", ",", "27"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"1", ",", "13"}], "}"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"0", ",", "35"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"1", ",", "1"}], "}"}]}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{3.538130025458989*^9}]
+}, Open  ]]
+},
+WindowSize->{740, 752},
+WindowMargins->{{Automatic, 214}, {Automatic, 5}},
+FrontEndVersion->"8.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (November 6, \
+2010)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[579, 22, 1210, 33, 88, "Input"],
+Cell[1792, 57, 141, 2, 27, "Output"],
+Cell[1936, 61, 313, 9, 27, "Output"]
+}, Open  ]],
+Cell[2264, 73, 774, 17, 88, "Input"],
+Cell[3041, 92, 96, 1, 27, "Input"],
+Cell[CellGroupData[{
+Cell[3162, 97, 392, 8, 27, "Input"],
+Cell[3557, 107, 111, 1, 27, "Output"]
+}, Open  ]],
+Cell[3683, 111, 130, 1, 26, "Text"],
+Cell[3816, 114, 518, 15, 27, "Input"],
+Cell[4337, 131, 107, 1, 26, "Text"],
+Cell[CellGroupData[{
+Cell[4469, 136, 485, 12, 43, "Input"],
+Cell[4957, 150, 318, 9, 27, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5312, 164, 544, 13, 43, "Input"],
+Cell[5859, 179, 428, 15, 27, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
