@@ -114,8 +114,7 @@ KEGG_REFS={}
 KEGG_REFS["hsa04012"]=[14967450, 11252954, 16829981, 17000658, 16377102, 14744244, 12851486, 15864276, 16729045, 16729043, 10880430, 9872057, 15863494, 10490623, 9642287]
 KEGG_REFS["hsa04010"]=[11749383, 12191611, 12947395, 12676795, 11369511, 12390245, 14597384, 12566928, 12849693]
 
-INTERMEDIATE_THR=[20,40,41,46,47,50,60,70,77,80,85,90,100,107,110,112,120,150,200,250,300,250,400,450,500,550,600]
-
+INTERMEDIATE_THR=[20,40,41,46,47,50,60,70,77,80,85,90,100,107,110,112,120,150,200,250,300]
 
 
 def store_counts(cp,reference_pw,scaffold,prior_refs,prior_prots,with_string,seed_graph_built,cluster_type="",opt_tag="",prior_scores="",with_string_thr=-1):
@@ -156,6 +155,47 @@ def store_counts(cp,reference_pw,scaffold,prior_refs,prior_prots,with_string,see
 
 	f=open(LOGFILE,"a")
 	f.write(res_line_str+"\n")
+	f.close()
+
+def store_counts_long_format(cp,reference_pw,scaffold,prior_refs,prior_prots,with_string,seed_graph_built,seed_doc_real_count,seed_doc_real_perc,seed_prot_real_count,seed_prot_real_perc,cluster_type="",opt_tag="",with_string_thr=-1,prior_scores=[]):
+	# res=scipy.array(cp["full"]).T
+	# res_m=scipy.array(cp["merged"]).T
+	if with_string:
+		if with_string_thr!=-1:
+			string_tag="LSI+STRING_THR_%d"%(with_string_thr)+cluster_type
+		else:
+			string_tag="LSI+STRING"+cluster_type
+	else:
+		string_tag="LSI"+cluster_type
+	if not seed_graph_built:
+		string_tag+=" !S"
+
+	print "storing for",opt_tag
+	# full_series="{"+",".join(["{"+",".join(map(str,(x[0],x[1],x[3],x[4])))+"}" for x in cp["full"]])+"}"
+	# merged_series="{"+",".join(["{"+",".join(map(str,(x[0],x[1],x[3],x[4])))+"}" for x in cp["merged"]])+"}"
+
+	res_line=[
+		reference_pw.name,
+		";".join(sorted(prior_prots)),
+		";".join(map(str,sorted(prior_refs))),
+		str(seed_doc_real_perc),
+		str(seed_prot_real_perc),
+		str(seed_doc_real_count),
+		str(seed_prot_real_count),
+		string_tag,
+		opt_tag
+		]
+
+	LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+	print "using LOGFILE",LOGFILE
+
+	f=open(LOGFILE,"a")
+	for row in cp["full"]:
+		row=map(str,row)
+		(nedges,tpedges,fpedges,nprots,tpprots,fpprots)=row
+		res_line_str="\t".join(res_line+[nedges,nprots,tpedges,tpprots])
+		# print res_line_str
+		f.write(res_line_str+"\n")
 	f.close()
 
 def precomputed_for_pmid(pmid):
@@ -278,15 +318,30 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 
 	if (type(seed_prot_percent)==type(1)):
 		seed_prot_size=seed_prot_percent
+
+		seed_prot_real_count=seed_prot_size
+		seed_prot_real_perc=seed_prot_size*1.0/len(reference_pw)
+
 	elif type(seed_prot_percent)==type(1.0):
 		seed_prot_size=int(len(reference_pw.nodes())*seed_prot_percent)
+		seed_prot_real_perc=seed_prot_percent
+		seed_prot_real_count=seed_prot_size
+
 	else:
 		raise ValueError, "cant interpret input qty",seed_prot_percent
 
 	if type(seed_doc_percent)==type(1):
 		seed_doc_size=seed_doc_percent
+
+		seed_doc_real_count=seed_doc_size
+		seed_doc_real_perc=seed_doc_size *1.0 / (len(reference_pw.references()))
+
 	elif type(seed_doc_percent)==type(1.0):
 		seed_doc_size=int(len(reference_pw.references())*seed_doc_percent)
+
+		seed_doc_real_perc=seed_doc_percent
+		seed_doc_real_count=seed_doc_size
+
 	else:
 		raise ValueError, "cant interpret input qty",seed_doc_percent
 
@@ -331,12 +386,12 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 			w=int(MST_SCORE_LSI_WEIGHT-MST_SCORE_LSI_WEIGHT*max(0,mdata["confidence"])) #is confidence always 0<= <= 1? 
 		else:
 			w=BACKGROUND_DEFAULT_WEIGHT
-
-		if WITH_COMBINED_MST:
-			if src in STRING and tgt in STRING[src]:
-				w=w+STRING_MST_W*STRING[src][tgt]["weight"]
-			else:
-				w=w+STRING_MST_W*STRING_DEFAULT_SCORE
+		# String scoring is now performed downstream, and we keep two versions of the prior graph, one with and one without string scoring
+		# if WITH_COMBINED_MST:
+		# 	if src in STRING and tgt in STRING[src]:
+		# 		w=w+STRING_MST_W*STRING[src][tgt]["weight"]
+		# 	else:
+		# 		w=w+STRING_MST_W*STRING_DEFAULT_SCORE
 		local_hprd[src][tgt]["weight"]=w
 
 
@@ -346,8 +401,28 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 			prior_graph,gL,shov=recalg.mst_of_g(local_hprd,prior_prots,weighted=True,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
 		else:
 			prior_graph,gL,shov=recalg.mst_of_g(local_hprd,prior_prots,weighted=False,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
+
+
+		# Add the STRING score and compute another prior graph
+		if WITH_COMBINED_MST:
+			local_hprd_with_STRING=copy.deepcopy(local_hprd)
+			for e in local_hprd_with_STRING.edges_iter(data=True):
+				src,tgt,mdata=e
+				if src in STRING and tgt in STRING[src]:
+					w=w+STRING_MST_W*STRING[src][tgt]["weight"]
+				else:
+					w=w+STRING_MST_W*STRING_DEFAULT_SCORE
+			## The prior is then
+			if MST_ON_HPRD_WEIGHTED:
+				prior_graph_with_STRING,gL,shov=recalg.mst_of_g(local_hprd_with_STRING,prior_prots,weighted=True,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
+			else:
+				prior_graph_with_STRING,gL,shov=recalg.mst_of_g(local_hprd_with_STRING,prior_prots,weighted=False,verbose=verbose_inference,bidir=True,cutoff=None,return_gL=True)
 	else:
 		shov=prior_graph
+
+
+
+
 
 
 	if just_prior:
@@ -396,7 +471,6 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 		prior_scores="{}"
 
 
-
 	if len(prior_refs)==0:
 		print "rec without docs"
 		#Do the clustering and build
@@ -410,25 +484,30 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 
 		# rp,cp=recalg.rocSimGraph(lsi,all_refs,reference_pw,background,neighborhood=4,stop_at=stop_at,bunch_size=10,niter=1000,combine_graph=None,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph)
 		# print "!",cp[-1],sim_with_input_prot,N,len(reference_graph),sim_with_input_prot*100+N
-		print "all %d prior refs, No combination"%(len(prior_graph.references()))
+		print "all %d prior refs, No STRING"%(len(prior_graph.references()))
 		rp500All,cp500All=recalg.rocSimGraph(lsi,prior_graph.references(),reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR)
 		if store:
 			store_counts(cp500All,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+			store_counts_long_format(cp500All,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
 
 
-		print "all %d prior refs, combined with STRING"%(len(prior_graph.references()))
-		rp500AllString,cp500AllString=recalg.rocSimGraph(lsi,prior_graph.references(),reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
+		print "all %d prior refs, with STRING"%(len(prior_graph.references()))
+		rp500AllString,cp500AllString=recalg.rocSimGraph(lsi,prior_graph_with_STRING.references(),reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 		if store:
 			store_counts(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+			store_counts_long_format(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
 
 		if USE_STRING_THR!=-1:
 			print "Building up to USE_STRING_THR=%d with STRING, then up to stop_at=%d without"%(USE_STRING_THR,stop_at)
 
-			rp500AllStringBi,cp500AllStringBi_1=recalg.rocSimGraph(lsi,prior_graph.references(),reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=USE_STRING_THR,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=False,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
+			rp500AllStringBi,cp500AllStringBi_1=recalg.rocSimGraph(lsi,prior_graph_with_STRING.references(),reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=USE_STRING_THR,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=False,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 			rp500AllStringBi,cp500AllStringBi_2=recalg.rocSimGraph(lsi,prior_graph.references(),reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,combine_weight=0,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=rp500AllStringBi,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=False)
 
 			# if store:
-			# 	store_counts(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+			#	store_counts(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+			#	store_counts_long_format(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
 
 			# merge and combine the two score arrays
 
@@ -437,19 +516,31 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 			cp500AllStringBi["merged"]=sorted(set(cp500AllStringBi_1["merged"]+cp500AllStringBi_2["merged"]))
 			if store:
 				store_counts(cp500AllStringBi,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",with_string_thr=USE_STRING_THR)
+				store_counts_long_format(cp500AllStringBi,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",with_string_thr=USE_STRING_THR,seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
 
 		avg_n_annotations=scipy.average(sorted(map(lambda x:len(x[2]["refs"]), prior_graph.edges(data=True))))
 		print "Avg annotation",avg_n_annotations
 		if avg_n_annotations >= FILTER_THR_AVG_ANNOT:
 			best_cluster_filter,clusters_filter=select_best_cluster_filtering(prior_graph,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
+			best_cluster_filter_with_STRING,clusters_filter=select_best_cluster_filtering(prior_graph_with_STRING,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
+			
+			print "best %d clusters_filter (out of %d), no combination"%(len(best_cluster_filter),len(prior_graph.references()))
+			rp500CCF,cp500CCF=recalg.rocSimGraph(lsi,best_cluster_filter,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,combine_weight=None, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
+
 			print "best %d clusters_filter (out of %d), combined with STRING"%(len(best_cluster_filter),len(prior_graph.references()))
-			rp500CCFString,cp500CCFString=recalg.rocSimGraph(lsi,best_cluster_filter,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
+			rp500CCFString,cp500CCFString=recalg.rocSimGraph(lsi,best_cluster_filter_with_STRING,reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph_with_STRING,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 		else:
-			print "No clustering needed,using the %d refs, combined with STRING"%(len(prior_graph.references()))
+			print "No clustering needed,using the %d refs"%(len(prior_graph.references()))
+			rp500CCF,cp500CCF=rp500All,cp500All
 			rp500CCFString,cp500CCFString=rp500AllString,cp500AllString
 
 		if store:
+			store_counts(cp500CCF,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="CCF2")
 			store_counts(cp500CCFString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="CCF2")
+
+			store_counts_long_format(cp500CCF,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="CCF2",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+			store_counts_long_format(cp500CCFString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="CCF2",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
 
 		if all_clusters:
 			## Rec for all clusters
@@ -485,17 +576,35 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 		return cp500AllString,cp500CCFString,rp500AllString,rp500CCFString,mst_graph
 	else: #we are given documents
 		print "rec with docs",len(prior_refs)
+		print "No combination"
 		# rp,cp=recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph)
-		# rp500All,cp500All=			recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=True,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM)
+		rp500All,cp500All=            recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,combine_weight=None,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM,build_seed_from_references=True)
+		if store:
+			store_counts(cp500All,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+			store_counts_long_format(cp500All,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
+
 		print "Combined with string"
-		rp500AllString,cp500AllString=recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM,build_seed_from_references=True)
+		rp500AllString,cp500AllString=recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph_with_STRING,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM,build_seed_from_references=True)
 		if store:
 			store_counts(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+			store_counts_long_format(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=True,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
 		if prior_prots==[]:
-			print "Combined with string, No seed graph"
-			rp500AllStringNSeed,cp500AllStringNSeed=recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM,build_seed_from_references=False)
+			print "No seed graph, No combination"
+			rp500AllNSeed,cp500AllNSeed=recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,combine_weight=None,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM,build_seed_from_references=False)
+			if store:
+				store_counts(cp500AllNSeed,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=False,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+				store_counts_long_format(cp500AllNSeed,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=False,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
+
+			print "No seed graph, Combined with string"
+			rp500AllStringNSeed,cp500AllStringNSeed=recalg.rocSimGraph(lsi,prior_refs,reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph_with_STRING,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,DOC_SIM=DOC_SIM,build_seed_from_references=False)
 			if store:
 				store_counts(cp500AllStringNSeed,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=False,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
+				store_counts_long_format(cp500AllStringNSeed,reference_pw,local_hprd,prior_refs,prior_prots,seed_graph_built=False,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="",seed_doc_real_count=seed_doc_real_count,seed_doc_real_perc=seed_doc_real_perc,seed_prot_real_count=seed_prot_real_count,seed_prot_real_perc=seed_prot_real_perc)
+
+
 		return cp500All,cp500AllString,rp500All,rp500AllString,mst_graph
 
 		# best_cc_res=(rp,cp,rp500,cp500)
