@@ -76,7 +76,7 @@ STRING_DEFAULT_SCORE=10
 FILTER_THR_AVG_ANNOT=2.1
 USE_STRING_THR=-1 # Number of edges after wich we dot not combine with STRING. -1 to always combine
 
-BACKGROUND_CONTAINS_NP=True
+BACKGROUND_CONTAINS_NP=False
 
 all_task=[]
 
@@ -150,7 +150,11 @@ def store_counts(cp,reference_pw,scaffold,prior_refs,prior_prots,with_string,see
 		]
 
 	res_line_str="\t".join(res_line)
-	LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+	if BACKGROUND_CONTAINS_NP:
+		LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+	else:
+		LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_HPRDONLY_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+
 	print "using LOGFILE",LOGFILE
 
 	f=open(LOGFILE,"a")
@@ -186,7 +190,11 @@ def store_counts_long_format(cp,reference_pw,scaffold,prior_refs,prior_prots,wit
 		opt_tag
 		]
 
-	LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+	if BACKGROUND_CONTAINS_NP:
+		LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+	else:
+		LOGFILE="rec_results_final/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_HPRDONLY_%d_%d_%d_%d_%d_%.2f_%s.tsv"%(lsi_dims,with_genia,with_mesh,with_stemmer,WITH_COMBINED_MST,STRING_W,str(THREAD_ID))
+
 	print "using LOGFILE",LOGFILE
 
 	f=open(LOGFILE,"a")
