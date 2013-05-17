@@ -5,15 +5,6 @@ library(gridExtra)
 library(reshape2)
 library(data.table)
 setwd("~/Documents/LINK/")
-# results <- rbind(
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12538.tsv",sep="\t")),
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12542.tsv",sep="\t")),
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12546.tsv",sep="\t")),
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12549.tsv",sep="\t")),
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12545.tsv",sep="\t")),
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12548.tsv",sep="\t")),
-#   data.table(read.table("tests/rec_results/protein_based_rec_scores_counts_combined_mst_lsi_new_mst_LONG_1000_0_1_1_1_0.30_12539.tsv",sep="\t"))
-#   )
 
 
 
@@ -25,6 +16,9 @@ for(a.file in list.files("tests/rec_results/",pattern='.*LONG.*[.]tsv')){
 
 dim(results)
 save(results,file="tests/rec_results/results.RData")
+
+load("tests/rec_results/results.RData")
+tables()
 # Add column names
 setnames(results,colnames(results),c("pathway","input.prots","input.docs","input.docs.perc","input.prot.perc","input.docs.counts","input.prot.counts","setup","opt.tags","n.edges","n.prots","tp.edges","tp.prots"))
 
@@ -42,14 +36,18 @@ length(unique(results[pathway=="ar",input.docs]))
 # single rec plot 
 results[pathway=="ar" & opt.tags=="25%Prot,25%Docs" & setup=="LSI+STRING" & n.edges==0]
 results[pathway=="ar" & opt.tags=="25%Prot,25%Docs" & setup=="LSI+STRING" & n.edges==150]
-ggplot(data=results[pathway=="ar" & opt.tags=="25%Prot,0%Docs" & n.edges<=150],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(input.docs,setup,input.prots)))+geom_point()+geom_line()
+ggplot(data=results[pathway=="ar" & opt.tags=="25%Prot,0%Docs" & n.edges<=150],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(input.docs,setup,input.prots)))+geom_point(alpha=0.4)+geom_line()
 
 
- grid.arrange(
-   ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point()+geom_smooth(),
-   ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point()+geom_smooth()
-   )
-   
+ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth()+geom_line(aes(group=interaction(input.docs,setup,input.prots)),alpha=0.3)
+ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth()+geom_line(aes(group=interaction(input.docs,setup,input.prots)),alpha=0.3)
+
+
+grid.arrange(
+  ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth(),
+  ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth()
+  )
+
 
 ggplot(data=results[pathway=="tgfb" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.5)+geom_smooth()+facet_wrap(~opt.tags)
 ggplot(data=results[pathway=="tgfb" & n.edges<=500],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.4)+geom_smooth(method="loess")+facet_wrap(~opt.tags)
