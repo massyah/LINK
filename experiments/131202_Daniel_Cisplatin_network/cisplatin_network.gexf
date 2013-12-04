@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?><gexf version="1.1" xmlns="http://www.gexf.net/1.1draft" xmlns:viz="http://www.gexf.net/1.1draft/viz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.w3.org/2001/XMLSchema-instance">
+  <graph defaultedgetype="undirected" mode="static">
+    <nodes>
+      <node id="RAD17" label="RAD17" />
+      <node id="ITCH" label="ITCH" />
+      <node id="CLSPN" label="CLSPN" />
+      <node id="HMGB2" label="HMGB2" />
+      <node id="RAD9A" label="RAD9A" />
+      <node id="ATM" label="ATM" />
+      <node id="EPHA3" label="EPHA3" />
+      <node id="PRKDC" label="PRKDC" />
+      <node id="MAPK14" label="MAPK14" />
+      <node id="HIPK2" label="HIPK2" />
+      <node id="HSPA1A" label="HSPA1A" />
+      <node id="ATR" label="ATR" />
+      <node id="TOP1" label="TOP1" />
+      <node id="USP28" label="USP28" />
+      <node id="ABL1" label="ABL1" />
+      <node id="PIN1" label="PIN1" />
+      <node id="CASP9" label="CASP9" />
+      <node id="YWHAZ" label="YWHAZ" />
+      <node id="STRA13" label="STRA13" />
+      <node id="TEC" label="TEC" />
+      <node id="NEDD4" label="NEDD4" />
+      <node id="SFRS1" label="SFRS1" />
+      <node id="TRIAP1" label="TRIAP1" />
+      <node id="LYN" label="LYN" />
+      <node id="MAPK3" label="MAPK3" />
+      <node id="KLF4" label="KLF4" />
+      <node id="CSNK2A1" label="CSNK2A1" />
+      <node id="MARK3" label="MARK3" />
+      <node id="YWHAB" label="YWHAB" />
+      <node id="NCL" label="NCL" />
+      <node id="RELA" label="RELA" />
+      <node id="CHEK2" label="CHEK2" />
+      <node id="PLK3" label="PLK3" />
+      <node id="APAF1" label="APAF1" />
+      <node id="CHEK1" label="CHEK1" />
+      <node id="BRCA1" label="BRCA1" />
+      <node id="ZNHIT1" label="ZNHIT1" />
+      <node id="CDKN2A" label="CDKN2A" />
+      <node id="VRK1" label="VRK1" />
+      <node id="CDC25C" label="CDC25C" />
+      <node id="CDC25B" label="CDC25B" />
+      <node id="XPA" label="XPA" />
+      <node id="MDC1" label="MDC1" />
+      <node id="CUL1" label="CUL1" />
+      <node id="CREB1" label="CREB1" />
+      <node id="PPP2R2B" label="PPP2R2B" />
+      <node id="BLM" label="BLM" />
+      <node id="TP53INP1" label="TP53INP1" />
+      <node id="TIPARP" label="TIPARP" />
+      <node id="CSNK2B" label="CSNK2B" />
+      <node id="NQO1" label="NQO1" />
+      <node id="WRN" label="WRN" />
+      <node id="MDM2" label="MDM2" />
+      <node id="EP300" label="EP300" />
+      <node id="MDM4" label="MDM4" />
+      <node id="PTPN6" label="PTPN6" />
+      <node id="ING2" label="ING2" />
+      <node id="CSNK1A1" label="CSNK1A1" />
+      <node id="TP53" label="TP53" />
+      <node id="E2F1" label="E2F1" />
+      <node id="TOPBP1" label="TOPBP1" />
+      <node id="UBE2A" label="UBE2A" />
+      <node id="TOP2B" label="TOP2B" />
+      <node id="RPA1" label="RPA1" />
+      <node id="KAT5" label="KAT5" />
+      <node id="TP73" label="TP73" />
+      <node id="LCK" label="LCK" />
+      <node id="SHISA5" label="SHISA5" />
+      <node id="TERF1" label="TERF1" />
+      <node id="AATF" label="AATF" />
+      <node id="BTK" label="BTK" />
+      <node id="HMGB1" label="HMGB1" />
+      <node id="TP53BP1" label="TP53BP1" />
+      <node id="TOP2A" label="TOP2A" />
+      <node id="PPP1R13B" label="PPP1R13B" />
+      <node id="EEF1E1" label="EEF1E1" />
+      <node id="TADA3" label="TADA3" />
+      <node id="MAPK11" label="MAPK11" />
+    </nodes>
+    <edges>
+      <edge id="0" source="RAD17" target="ATM" />
+      <edge id="1" source="ITCH" target="TP73" />
+      <edge id="2" source="CLSPN" target="USP28" />
+      <edge id="3" source="HMGB2" target="TP53" />
+      <edge id="4" source="RAD9A" target="ABL1" />
+      <edge id="5" source="RAD9A" target="ATM" />
+      <edge id="6" source="ATM" target="BRCA1" />
+      <edge id="7" source="ATM" target="EEF1E1" />
+      <edge id="8" source="ATM" target="ATM" />
+      <edge id="9" source="ATM" target="TP53" />
+      <edge id="10" source="ATM" target="E2F1" />
+      <edge id="11" source="ATM" target="TOPBP1" />
+      <edge id="12" source="ATM" target="MDM4" />
+      <edge id="13" source="ATM" target="MDC1" />
+      <edge id="14" source="ATM" target="KAT5" />
+      <edge id="15" source="ATM" target="CREB1" />
+      <edge id="16" source="ATM" target="PRKDC" />
+      <edge id="17" source="ATM" target="TERF1" />
+      <edge id="18" source="ATM" target="AATF" />
+      <edge id="19" source="ATM" target="TIPARP" />
+      <edge id="20" source="ATM" target="ABL1" />
+      <edge id="21" source="ATM" target="MDM2" />
+      <edge id="22" source="ATM" target="CHEK2" />
+      <edge id="23" source="ATM" target="XPA" />
+      <edge id="24" source="ATM" target="CHEK1" />
+      <edge id="25" source="EPHA3" target="TP53" />
+      <edge id="26" source="PRKDC" target="XPA" />
+      <edge id="27" source="PRKDC" target="TP53" />
+      <edge id="28" source="MAPK14" target="CDC25C" />
+      <edge id="29" source="MAPK14" target="ZNHIT1" />
+      <edge id="30" source="HIPK2" target="TP53" />
+      <edge id="31" source="HSPA1A" target="TRIAP1" />
+      <edge id="32" source="ATR" target="AATF" />
+      <edge id="33" source="ATR" target="XPA" />
+      <edge id="34" source="ATR" target="TP53" />
+      <edge id="35" source="ATR" target="EEF1E1" />
+      <edge id="36" source="ATR" target="E2F1" />
+      <edge id="37" source="TOP1" target="TP53" />
+      <edge id="38" source="TOP1" target="SFRS1" />
+      <edge id="39" source="USP28" target="MDC1" />
+      <edge id="40" source="USP28" target="TP53BP1" />
+      <edge id="41" source="ABL1" target="TP73" />
+      <edge id="42" source="ABL1" target="CASP9" />
+      <edge id="43" source="ABL1" target="MDM2" />
+      <edge id="44" source="ABL1" target="PTPN6" />
+      <edge id="45" source="PIN1" target="TP53" />
+      <edge id="46" source="YWHAZ" target="CDC25B" />
+      <edge id="47" source="YWHAZ" target="TP53" />
+      <edge id="48" source="STRA13" target="TP53" />
+      <edge id="49" source="TEC" target="TP53" />
+      <edge id="50" source="NEDD4" target="TP73" />
+      <edge id="51" source="TRIAP1" target="TP53" />
+      <edge id="52" source="TRIAP1" target="APAF1" />
+      <edge id="53" source="LYN" target="PTPN6" />
+      <edge id="54" source="MAPK3" target="TP53" />
+      <edge id="55" source="KLF4" target="TP53" />
+      <edge id="56" source="CSNK2A1" target="TP53" />
+      <edge id="57" source="MARK3" target="CDC25C" />
+      <edge id="58" source="YWHAB" target="CDC25C" />
+      <edge id="59" source="YWHAB" target="CDC25B" />
+      <edge id="60" source="NCL" target="TP53" />
+      <edge id="61" source="RELA" target="AATF" />
+      <edge id="62" source="CHEK2" target="CDC25C" />
+      <edge id="63" source="CHEK2" target="TP53" />
+      <edge id="64" source="CHEK2" target="AATF" />
+      <edge id="65" source="CHEK2" target="MDC1" />
+      <edge id="66" source="PLK3" target="CDC25C" />
+      <edge id="67" source="PLK3" target="TP53" />
+      <edge id="68" source="CHEK1" target="TP53" />
+      <edge id="69" source="CHEK1" target="CDC25C" />
+      <edge id="70" source="CHEK1" target="BLM" />
+      <edge id="71" source="CHEK1" target="AATF" />
+      <edge id="72" source="CHEK1" target="CUL1" />
+      <edge id="73" source="ZNHIT1" target="TP53" />
+      <edge id="74" source="ZNHIT1" target="MAPK11" />
+      <edge id="75" source="CDKN2A" target="UBE2A" />
+      <edge id="76" source="VRK1" target="TP53" />
+      <edge id="77" source="PPP2R2B" target="TP53" />
+      <edge id="78" source="BLM" target="TP53BP1" />
+      <edge id="79" source="TP53INP1" target="TP53" />
+      <edge id="80" source="CSNK2B" target="TP53" />
+      <edge id="81" source="NQO1" target="TP53" />
+      <edge id="82" source="WRN" target="RPA1" />
+      <edge id="83" source="WRN" target="TP53" />
+      <edge id="84" source="MDM2" target="UBE2A" />
+      <edge id="85" source="EP300" target="TP73" />
+      <edge id="86" source="EP300" target="TADA3" />
+      <edge id="87" source="EP300" target="ING2" />
+      <edge id="88" source="PTPN6" target="LCK" />
+      <edge id="89" source="CSNK1A1" target="TP53" />
+      <edge id="90" source="TP53" target="HMGB1" />
+      <edge id="91" source="TP53" target="UBE2A" />
+      <edge id="92" source="TP53" target="TOP2B" />
+      <edge id="93" source="TP53" target="RPA1" />
+      <edge id="94" source="TP53" target="KAT5" />
+      <edge id="95" source="TP53" target="SHISA5" />
+      <edge id="96" source="TP53" target="BTK" />
+      <edge id="97" source="TP53" target="TOP2A" />
+      <edge id="98" source="TP53" target="TADA3" />
+      <edge id="99" source="TP73" target="HMGB1" />
+      <edge id="100" source="TP73" target="PPP1R13B" />
+    </edges>
+  </graph>
+</gexf>

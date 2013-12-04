@@ -1,0 +1,70 @@
+```{r}
+library(ggplot2)
+library(gridExtra)
+
+library(reshape2)
+library(data.table)
+setwd("~/Documents/LINK/")
+
+
+
+results<-data.table()
+for(a.file in list.files("tests/rec_results/",pattern='.*LONG.*[.]tsv')){
+  results<-rbind(results,data.table(read.table(paste0("tests/rec_results/",a.file),sep="\t")))
+  print(dim(results))
+}
+
+dim(results)
+save(results,file="tests/rec_results/results.RData")
+
+load("tests/rec_results/results.RData")
+tables()
+# Add column names
+setnames(results,colnames(results),c("pathway","input.prots","input.docs","input.docs.perc","input.prot.perc","input.docs.counts","input.prot.counts","setup","opt.tags","n.edges","n.prots","tp.edges","tp.prots"))
+
+
+# Drop the labels of the input lists factors, represent as an int
+results$input.prots = as.numeric(results$input.prots)
+results$input.docs = as.numeric(results$input.docs)
+# Count reconstructions 
+table(results[n.edges==0,list(pathway,setup)])
+table(results[n.edges==0 & setup=="LSI",list(pathway,opt.tags)])
+table(results[n.edges==0 & setup=="LSI",list(pathway,setup,opt.tags)])
+
+length(unique(results[pathway=="ar",input.docs]))
+
+# single rec plot 
+results[pathway=="ar" & opt.tags=="25%Prot,25%Docs" & setup=="LSI+STRING" & n.edges==0]
+results[pathway=="ar" & opt.tags=="25%Prot,25%Docs" & setup=="LSI+STRING" & n.edges==150]
+ggplot(data=results[pathway=="ar" & opt.tags=="25%Prot,0%Docs" & n.edges<=150],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(input.docs,setup,input.prots)))+geom_point(alpha=0.4)+geom_line()
+
+
+ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth()+geom_line(aes(group=interaction(input.docs,setup,input.prots)),alpha=0.3)
+ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth()+geom_line(aes(group=interaction(input.docs,setup,input.prots)),alpha=0.3)
+
+
+grid.arrange(
+  ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.prots,y=tp.prots,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth(),
+  ggplot(data=results[pathway=="tgfb" & opt.tags=="25%Prot,0%Docs" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(alpha=0.4)+geom_smooth()
+  )
+
+
+ggplot(data=results[pathway=="tgfb" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.5)+geom_smooth()+facet_wrap(~opt.tags)
+ggplot(data=results[pathway=="tgfb" & n.edges<=500],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.4)+geom_smooth(method="loess")+facet_wrap(~opt.tags)
+
+ggplot(data=results[pathway=="tgfb" & n.edges<=500],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.4)+geom_smooth(method="loess")+facet_wrap(~opt.tags)
+
+ggplot(data=results[pathway=="hsa04012" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.4)+geom_smooth(method="loess")+facet_wrap(~opt.tags)
+
+ggplot(data=results[pathway=="hsa04010" & n.edges<=200],aes(x=n.edges,y=tp.edges,color=setup,group=interaction(setup)))+geom_point(size=0.4)+geom_smooth(method="loess")+facet_wrap(~opt.tags)
+
+
+results[pathway=="tgfb" & n.edges==200 & setup=="LSI+STRING" & opt.tags=="0%Prot,50%Docs"]
+```
+
+
+Vs BowTie 
+```{r}
+unique(results[pathway=="hsa04012" & opt.tags=="-1 Prot,0%Docs" & n.edges %in% c(19,20,21,29,77)][order(n.edges)])
+unique(results[pathway=="hsa04010" & opt.tags=="-1 Prot,0%Docs" & n.edges %in% c(41,47,112)][order(n.edges)])
+```
