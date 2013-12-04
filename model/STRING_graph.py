@@ -3,20 +3,30 @@ import networkx as nx
 import sys
 import cPickle
 
+
+
+# Global variables 
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger
+
+
 manual_correction={
 "YER118C":"SHO1"
 }
 
 def load_aliases():
 	try:
-		aliasesFile="../otherTools/BowTieBuilder/data/ser.python.alias.%s.%s.bdat"%(SPECIES,ALIASESVERSION)
+		aliasesFile=LINKROOT+"/datasets/STRING/ser.python.alias.%s.%s.bdat"%(SPECIES,ALIASESVERSION)
 		f=open(aliasesFile)
 		aliases,revaliases=cPickle.load(f)
 		f.close()
 	except IOError:
-		print "Reading alias files"
+		logger.info("Reading alias files")
 		try:
-			aliasesFile="../otherTools/BowTieBuilder/data/protein.aliases.%s.%s.txt"%(SPECIES,ALIASESVERSION)
+			aliasesFile=LINKROOT+"/datasets/STRING/protein.aliases.%s.%s.txt"%(SPECIES,ALIASESVERSION)
 			aliasesFile=open(aliasesFile).readlines()
 			aliasesRaw=[x.strip().split("\t") for x in aliasesFile]
 			if SPECIES=="yeast":
@@ -38,37 +48,37 @@ def load_aliases():
 
 			revaliases=dict([(x[1],x[0]) for x in aliases.items()])
 			# save them
-			aliasesFile="../otherTools/BowTieBuilder/data/ser.python.alias.%s.%s.bdat"%(SPECIES,ALIASESVERSION)
+			aliasesFile=LINKROOT+"/datasets/STRING/ser.python.alias.%s.%s.bdat"%(SPECIES,ALIASESVERSION)
 			f=open(aliasesFile,"w")
 			cPickle.dump((aliases,revaliases),f,protocol=cPickle.HIGHEST_PROTOCOL)
 			f.close()
 		except IOError:
-			print "Can't find alias file",aliasesFile
+			logger.critical("Can't find alias file %s"%(aliasesFile))
 			sys.exit(2)
 
-	print len(aliases),"aliases loaded"
+	logger.info("%d aliases loaded"%(len(aliases)))
 	return aliases,revaliases
 
 def load_links():
 	global ALIASES,REVALIASES,SPECIES,VERSION,ALIASESVERSION,STRING
 	if "SPECIES" not in globals():
-		print "SPECIES not specified, bail out"
+		logger.critical("SPECIES not specified, bail out")
 		return
 	if "ALIASES" not in globals():
-		print "LOADING ALIASES FILES"
+		logger.info("LOADING ALIASES FILES")
 		ALIASES,REVALIASES=load_aliases()
 
 	try:
-		linksFile="../otherTools/BowTieBuilder/data/ser.python.protein.links.%s.%s.bdat"%(SPECIES,VERSION)
+		linksFile=LINKROOT+"/datasets/STRING/ser.python.protein.links.%s.%s.bdat"%(SPECIES,VERSION)
 		f=open(linksFile)
 		STRING=cPickle.load(f)
 		f.close()
 	except IOError:
-		print "Reading links files"
+		logger.info("Reading links files")
 		try:
-			linksFile="../ISOP/otherTools/BowTieBuilder/data/protein.links.%s.%s.txt"%(SPECIES,VERSION)
+			linksFile=LINKROOT+"/datasets/STRING/protein.links.%s.%s.txt"%(SPECIES,VERSION)
 			allInteractionsR=[x.strip().split("\t") for x in open(linksFile).readlines()]
-			print len(allInteractionsR),"interactions loaded"
+			logger.info("%d interactions loaded"%(len(allInteractionsR)))
 			#convert to Official gene name
 			noAlias=set()
 
@@ -76,7 +86,7 @@ def load_links():
 			STRING=nx.Graph()
 			for i in range(len(allInteractionsR)):
 				if (i % 10000)==0:
-					print "%d:%.2f %%"%(i,i*1.0/len(allInteractionsR)*100)
+					logger.info("Loaded %d:%.2f %%"%(i,i*1.0/len(allInteractionsR)*100))
 					sys.stdout.flush()
 				x=allInteractionsR[i]
 				if x[0] not in ALIASES:
@@ -89,19 +99,22 @@ def load_links():
 					noAlias.add(x[1])
 				confidence=float(x[2])/1000
 				STRING.add_edge(ALIASES[x[0]],ALIASES[x[1]],{"weight":1000-int(x[2]),"confidence":confidence})
-			print len(noAlias),"without alias"
+			logger.info("%d without alias"%(len(noAlias)))
 			#save the Graph
-			linksFile="../otherTools/BowTieBuilder/data/ser.python.protein.links.%s.%s.bdat"%(SPECIES,VERSION)
+			linksFile=LINKROOT+"/datasets/STRING/ser.python.protein.links.%s.%s.bdat"%(SPECIES,VERSION)
 			f=open(linksFile,"w")
 			cPickle.dump(STRING,f,protocol=cPickle.HIGHEST_PROTOCOL)
 			f.close()
 
 		except IOError:
-			print "Can't find links file",linksFile
+			logger.critical("Can't find links file %s"%(linksFile))
 			sys.exit(1)
 
-	print "STRING graph loaded",STRING.number_of_nodes(),"nodes",STRING.number_of_edges(),"edges",nx.algorithms.number_connected_components(STRING),"connected components",map(len,nx.algorithms.connected_components(STRING))
-
+	logger.info("""
+		STRING graph loaded with 
+		%d nodes
+		%d edges
+		%d connected components of sizes:%s"""%(STRING.number_of_nodes(),STRING.number_of_edges(),nx.algorithms.number_connected_components(STRING),"; ".join(map(lambda x: str(len(x)),nx.algorithms.connected_components(STRING)))))
 	#this generate a 18721 nodes, 1623577 edge graph, of 9 connected component
 	return STRING
 
@@ -121,20 +134,7 @@ def score_of_path(nodeList):
 	return scores,totalScore
 	
 
-# #Globals
-# # if "STRING" not in globals():
-# if ("SPECIES" not in globals()):
-# 	# print "SETTING SPECIES TO YEAST"
-# 	# SPECIES="yeast"
-# 	# VERSION="v9.0"
-# 	# ALIASESVERSION=""+VERSION
 
-# 	print "SETTING SPECIES TO HUMAN"
-# 	SPECIES="human"
-# 	VERSION="v9.0"
-# 	ALIASESVERSION="Ensembl_HGNC."+VERSION
-
-# if ("STRING" not in globals()) or (LOADEDSPECIES!=SPECIES) or (LOADEDVERSION != VERSION):
 def load_string(species,version):
 	global LOADEDSPECIES,LOADEDVERSION,SPECIES,VERSION,ALIASESVERSION,ALIASES,REVALIASES,STRING
 	SPECIES=species

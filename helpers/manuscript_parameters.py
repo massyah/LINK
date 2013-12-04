@@ -47,4 +47,4 @@ STRING_DEFAULT_SCORE=10
 FILTER_THR_AVG_ANNOT=2.1
 USE_STRING_THR=-1 # Number of edges after wich we dot not combine with STRING. -1 to always combine
 
-BACKGROUND_CONTAINS_NP=False
+BACKGROUND_CONTAINS_NP=True

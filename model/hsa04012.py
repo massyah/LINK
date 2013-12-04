@@ -1,16 +1,22 @@
-# import model as docmodel #assume a docmodel is already loaded!
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger
+
+import hsa_model as docmodel
 import networkx as nx
 import os
 import kgml_parser
 
 def build_hsa04012():
 	hprdNp=docmodel.AnnotatedGraph.build_HPRDNPInteractome()
-	gp=kgml_parser.build_kegg_network("../datasets/KEGG/hsa04012.xml").to_undirected()
+	gp=kgml_parser.build_kegg_network(LINKROOT+"/datasets/KEGG/hsa04012.xml").to_undirected()
 	gp.name="hsa04012"
 	kegg_ref=hprdNp.mapping_of_graph(gp)
 	reference_pathway_nodes=[]
 	c_comps=nx.algorithms.connected_components(kegg_ref)
-	print "connected components",[len(x) for x in c_comps]
+	logger.info("connected components %s"%([len(x) for x in c_comps]))
 	for cc in c_comps:
 		if len(cc) > len(reference_pathway_nodes):
 			reference_pathway_nodes=cc

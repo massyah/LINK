@@ -5,9 +5,19 @@ This script parse and reconstruct the netpath signaling pathways, based on the r
 
 
 """
+import sys,os
+
+
+# Try to find LINKROOT instal folder given the current dir of this file 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger 
+
+logger.info("Identified LINK folder install in %s"%(os.path.abspath(LINKROOT)))
+
+
 import networkx as nx
-
-
 labels="molass_id	pathway_id	prot1_name	prot1_acc	prot1_species	prot1_role	prot1_tagged	prot1_over_expressed	prot2_name	prot2_acc	prot2_species	prot2_role	prot2_tagged	prot2_over_expressed	prot1_start_end	prot2_start_end	ref_id	int_location	int_type	int_short_label	exp_type	host_organism	created_date	created_author	last_mod_date	last_mod_author	review_date	review_author	display_order".split("\t")
 INTFIELDS=["pathway_id"]
 INTFIELDSINDEXES=[labels.index(x) for x in INTFIELDS]
@@ -15,7 +25,8 @@ INTFIELDSINDEXES=[labels.index(x) for x in INTFIELDS]
 
 NP_HUGOALIASING={}
 
-aliasing=[x.strip().split("\t") for x in open("../datasets/hugo_gene_mapping_np_prot.tsv","r").readlines()[1:] if x[0]!="#"]
+logger.info("Building HUGO gene mapper")
+aliasing=[x.strip().split("\t") for x in open(LINKROOT+"/datasets/hugo_gene_mapping_np_prot.tsv","r").readlines()[1:] if x[0]!="#"]
 NP_HUGOALIASING=dict([(x[0],x[2]) for x in aliasing if x[2]!="-"])
 
 class Assoc(object):
@@ -35,7 +46,8 @@ class Assoc(object):
 		return self.prot1_name+"-"+self.prot2_name+":"+self.ref_id
 		
 def parse():
-	molassoc=open("../datasets/NP_molassociation.tsv","r").readlines()
+	logger.info("Parsing NP dataset")
+	molassoc=open(LINKROOT+"/datasets/NP_molassociation.tsv","r").readlines()
 	allAssoc=[]
 	molassoc.pop(0)
 	for l in molassoc:

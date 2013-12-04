@@ -1,10 +1,27 @@
-#import model as docmodel #assume a docmodel is loaded in the global space
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger
+
+import hsa_model as docmodel
+import networkx as nx
 import os
 import kgml_parser
 
+
+
+# Global variables 
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger
+
+
 def build_hsa04010():
 	hprdNp=docmodel.AnnotatedGraph.build_HPRDNPInteractome()
-	gp=kgml_parser.build_kegg_network("../datasets/KEGG/hsa04010.xml")
+	gp=kgml_parser.build_kegg_network(LINKROOT+"/datasets/KEGG/hsa04010.xml")
 	gp.name="hsa04010"
 	kegg_ref=hprdNp.mapping_of_graph(gp)
 	reference_pathway_nodes=[]

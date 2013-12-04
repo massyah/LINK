@@ -1,3 +1,16 @@
+
+# Global variables 
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger
+
+
+
+
+
+
 SPECIES="human"
 VERSION="v9.0"
 ALIASESVERSION="Ensembl_HGNC."+VERSION
@@ -7,7 +20,8 @@ from  model import *
 import collections
 import NP_parser
 import scipy
-import PID_parser
+from  annotated_graph import AnnotatedGraph
+
 import psycopg2
 conn=psycopg2.connect("dbname=th17 password=th17")
 
@@ -43,13 +57,15 @@ def check_np_protein_names():
 
 
 def build_and_save_hprd_corpus(num_topics=500,use_genia=True,use_mesh=True,use_stemmer=True,pid_np_only=False,test_only=False):
+	import PID_parser
+
 	# if use_genia:
-	fname="../corpus/hprd_corpus_64_new_token_%d_%d_%d_%d"%(num_topics,use_genia,use_mesh,use_stemmer)
+	fname=LINKROOT+"/corpus/hprd_corpus_64_new_token_%d_%d_%d_%d"%(num_topics,use_genia,use_mesh,use_stemmer)
 	if pid_np_only:
 		fname+="_pidnp"
 	# else:
 		# fname="../corpus/hprd_corpus_64_new_token_%d_no_genia"%(num_topics)
-	print "Building corpus",fname
+	logger.info("Building corpus to be saved in %s"%(fname))
 	backgroundpmids=set()
 	if not pid_np_only:
 		hprd=AnnotatedGraph.build_HPRDNPInteractome()
@@ -60,16 +76,15 @@ def build_and_save_hprd_corpus(num_topics=500,use_genia=True,use_mesh=True,use_s
 	for g in NP.values():
 		backgroundpmids.update(g.references())
 
-	print len(backgroundpmids)
+	logger.info("Will account for %d documents"%(len(backgroundpmids)))
 	if test_only:
-		print "reduced",len(backgroundpmids),"to",
+		logger.info("For testing purposes, reduced %d to 1000"%(len(backgroundpmids)))
 		backgroundpmids=random.sample(backgroundpmids,1000)
-		print len(backgroundpmids)
 
 	prepare_corpus(backgroundpmids,use_genia=use_genia,use_mesh=use_mesh,use_stemmer=use_stemmer)
 
 	lsiLogEntMediumCorpus=LSICorpus(backgroundpmids,use_logent=True,num_topics=num_topics,name=fname)
-	print "Corpus fully build"
+	logger.info("Corpus fully build")
 	sys.stdout.flush()			
 
 	if not test_only:
@@ -80,13 +95,14 @@ def build_and_save_hprd_corpus(num_topics=500,use_genia=True,use_mesh=True,use_s
 
 def load_hprd_corpus(num_topics=500,with_genia=True,with_mesh=True,with_stemmer=True,pid_np_only=False):
 	if with_genia==-1:
-		fname="../corpus/hprd_corpus_64_%d.dat"%(num_topics)
+		fname=LINKROOT+"/corpus/hprd_corpus_64_%d.dat"%(num_topics)
 	else:
-		fname="../corpus/hprd_corpus_64_new_token_%d_%d_%d_%d"%(num_topics,with_genia,with_mesh,with_stemmer)
+		fname=LINKROOT+"/corpus/hprd_corpus_64_new_token_%d_%d_%d_%d"%(num_topics,with_genia,with_mesh,with_stemmer)
 		if pid_np_only:
 			fname+="_pidnp"
 		fname+=".dat"
 	# f=open("hprd_corpus_250.dat","rb")
+	logger.info("Loading corpus from file %s"%(fname))
 	f=open(fname)
 	lsiLogEntMediumCorpus=cPickle.load(f)
 	f.close()

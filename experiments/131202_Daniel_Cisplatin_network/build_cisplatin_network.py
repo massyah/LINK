@@ -53,17 +53,9 @@ pid_np_only=False
 # LSI model
 if "lsi" not in globals():
 	logger.info("loading LSI")
-	if with_genia==-1:
-		lsi=docmodel.load_hprd_corpus(num_topics=lsi_dims,with_genia=-1)
-	else:
-		lsi=docmodel.load_hprd_corpus(num_topics=lsi_dims,with_genia=with_genia,with_mesh=with_mesh,with_stemmer=with_stemmer,pid_np_only=pid_np_only)
-
+	lsi=docmodel.load_hprd_corpus(num_topics=lsi_dims,with_genia=with_genia,with_mesh=with_mesh,with_stemmer=with_stemmer,pid_np_only=pid_np_only)
 	STRING=STRING_graph.load_string("human","v9.0")
-	if BACKGROUND_CONTAINS_NP:
-		background=docmodel.AnnotatedGraph.build_HPRDNPInteractome()
-	else:
-		background=docmodel.AnnotatedGraph.build_HPRDOnlyInteractome()
-
+	background=docmodel.AnnotatedGraph.build_HPRDNPInteractome()
 
 logger.info("Using LSI Model:%s"%(lsi.name))
 

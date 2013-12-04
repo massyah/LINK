@@ -1,3 +1,12 @@
+
+# Global variables 
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger
+
+
 from lxml import etree
 import os
 from IPython.core.debugger import Tracer; debug_here = Tracer()
@@ -20,7 +29,7 @@ def load_yeast_aliases():
 	if "aliases" in globals():
 		return
 	global aliases, revaliases
-	aliasesFile="../otherTools/BowTieBuilder/data/ser.python.alias.yeast.v9.0.bdat"
+	aliasesFile=LINKROOT+"datasets/STRING/ser.python.alias.yeast.v9.0.bdat"
 	f=open(aliasesFile)
 	aliases,revaliases=cPickle.load(f)
 	f.close()
