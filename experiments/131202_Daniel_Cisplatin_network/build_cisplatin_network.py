@@ -2,7 +2,7 @@ import random
 import datetime
 from subprocess import call
 import collections
-import psycopg2
+
 import os
 import sys
 import cPickle
@@ -10,7 +10,7 @@ import scipy
 from numpy import dot
 import numpy
 from operator import itemgetter 
-import pylab
+
 import threading
 from Queue import *
 import copy
@@ -33,16 +33,10 @@ import helpers
 from IPython.core.debugger import Tracer; debug_here = Tracer()
 import hsa_model as docmodel
 
-#KEGG PW 
-from hsa04012 import *
-from hsa04010 import *
-
-
-
 # Parameters 
 from manuscript_parameters import * 
 
-## Test Corpus variant
+## Overwrite MS parameters with smaller test Corpus variant
 lsi_dims=100
 with_genia=0
 with_mesh=False
@@ -86,6 +80,8 @@ seed_graph=background_cispl.subgraph(["ATM"])
 empty_graph=docmodel.AnnotatedGraph()
 atm_related=recalg.rocSimGraph(simModel=lsi,seed=[],seed_graph=seed_graph,reference_pathway=empty_graph,background=background_cispl,stop_at=-1,niter=5,bunch_size=20,neighborhood=4,use_graph=None,combine_graph=None,combine_weight=1.0,force_nodes=[],verbose=False,MERGE_COMPLEXES=False,DOC_SIM=doc_sims_d,AGGREGATE_WITH=max,intermediate_graph_threshold=INTERMEDIATE_THR,add_edges_to_seed_graph=True,score_all_background=False,SCAFFOLD=None,build_seed_from_references=False)
 
+
+logger.info("Cisplatin network contains %d nodes, %d edges, %d references"%(atm_related[0].number_of_nodes(),atm_related[0].number_of_edges(),len(atm_related[0].references())))
 
 
 # output in GEXF format 

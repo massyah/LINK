@@ -2,7 +2,7 @@ import random
 import datetime
 from subprocess import call
 import collections
-import psycopg2
+
 import os
 import sys
 import cPickle
@@ -10,19 +10,26 @@ import scipy
 from numpy import dot
 import numpy
 from operator import itemgetter 
-import pylab
+
 import threading
 from Queue import *
 import copy
 import time
 import networkx as nx
 
-sys.path.append("../model")
+# Global LINK folder location 
+
+LINKROOT="../../"
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger 
+
+
 import STRING_graph
 import reconstruction_algorithms as recalg
 import helpers
 
-from IPython.core.debugger import Tracer; debug_here = Tracer()
+# from IPython.core.debugger import Tracer; debug_here = Tracer()
 import hsa_model as docmodel
 
 
@@ -35,12 +42,8 @@ with_stemmer=True
 pid_np_only=False
 
 
-## PLOS article corpus variant
-lsi_dims=1000
-with_genia=0
-with_mesh=True
-with_stemmer=True
-pid_np_only=False
+# Parameters 
+from manuscript_parameters import * 
 
 
 verbose_inference=True

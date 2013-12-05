@@ -1,6 +1,6 @@
 import os,sys
 
-import psycopg2,cPickle
+import cPickle
 import scipy
 
 import numpy as np
@@ -12,13 +12,12 @@ import random
 import sys
 import time
 import collections
-import pylab
-from pyroc import *
+
+# from pyroc import *
 from gensim import *
-# from gensim.matutils import *
+
 from numpy import dot,array
 from operator import itemgetter 
-from plot_count_curve import *
 from helpers import *
 
 from  annotated_graph import *
@@ -26,11 +25,9 @@ from  annotated_graph import *
 import random
 
 from subprocess import call
-# from IPython.core.debugger import Tracer; debug_here = Tracer()
+
 from nltk import word_tokenize,PorterStemmer
 
-import psycopg2
-conn=psycopg2.connect("dbname=th17 password=th17")
 
 stemmer=PorterStemmer()
 
@@ -228,27 +225,6 @@ class VectorCorpus(Corpus):
 		for k,v in sorted_terms[:nTerms]:
 			print self.lsi.print_topic(k, topN=5),"%.2f"%v
 
-	def cluster_documents_mathematica(self,pmids):
-		# Clustering the document sets
-		coords=[]
-		for doc in pmids:
-			if doc not in self:
-				doc_coords=list(self.pmids_to_vec([doc]))
-			else:
-				doc_coords=list(self[doc])
-			k="0"
-			doc_lsi=[k,doc]+doc_coords
-			doc_lsi="\t".join(map(str,doc_lsi))
-			coords.append(doc_lsi)
-		f=open("prior_coords.tsv","w")
-		f.write("\n".join(coords))
-		f.close()
-
-		#perform the clustering,using mathematica for the moment
-		call(["/Applications/Mathematica.app/Contents/MacOS/MathKernel", "-script", "/Users/hayssam/Documents/ISOP_0.2/model/math_cluster.m"])
-		clusters=[map(int,x.strip().split("\t")) for x in open("clusters.tsv").readlines()]
-		return clusters
-
 	def cluster_documents(self,pmids,n_clust=None,max_n=12,npass=15):
 		pmids=list(pmids)
 		pmids=[x for x in pmids if x in self._pmid_index]
@@ -320,48 +296,48 @@ class LDACorpus(VectorCorpus):
 
 
 
-def publications_for_pmids_old(pmidsList,use_genia=True):
-	pubToFetch=list(set(pmidsList).difference(set(_GLOBALPUBLICATIONTOPMID.keys())))
-	#Would need to split pmidsList in batch size
-	q="""SELECT pmid,abstract,firstauthor,mesh,da,title,journal,isreview,"geniaChunksList",titlechunk,query from "Publication" WHERE pmid=ANY(%s)"""
-	# q="""SELECT pmid,abstract,title,firstauthor,journal,da,isreview,query,"geniaChunksList",titlechunk FROM "Publication" WHERE pmid=ANY(%s)"""
-	conn=psycopg2.connect("dbname=th17 password=th17")
-	cur=conn.cursor()
-	cur.execute(q,(pubToFetch,))
-	# res=cur.fetchall()
-	publications=[]
-	for r in cur:
-		kvPairs=[]
-		kvPairs.append(("pmid",r[0]))
-		# kvPairs.append(("abstract",r[1]))
-		kvPairs.append(("authors",eval("["+r[2][1:-1]+"]")))
-		kvPairs.append(("mesh",r[3]))
-		kvPairs.append(("da",r[4]))
-		kvPairs.append(("title",r[5])) 
-		kvPairs.append(("journal",r[6])) # may need to build a journal class
-		kvPairs.append(("isreview",r[7])) # may need to parse a bool
-		kvPairs.append(("query",r[10])) # may need to split 
-		if use_genia:
-			chunks=eval(r[8])
-			tchunks=eval(r[9])
-			words,entities,genes=[],[],[]
-			for c in chunks:
-				words.extend([x.lower() for x in c[1]])
-				entities.extend([x.lower() for x in c[2]])
-				genes.extend([x.upper() for x in c[4]])
-			for c in tchunks:
-				words.extend([x.lower() for x in c[1]])
-				entities.extend([x.lower() for x in c[2]])
-				genes.extend([x.upper() for x in c[4]])
-			kvPairs.append(("entities",entities))
-			kvPairs.append(("genes",genes))
-			kvPairs.append(("tokens",words+entities+genes))
-		else:
-			kvPairs.append(("tokens",utils.simple_preprocess(r[5])+utils.simple_preprocess(r[1])))
+# def publications_for_pmids_old(pmidsList,use_genia=True):
+# 	pubToFetch=list(set(pmidsList).difference(set(_GLOBALPUBLICATIONTOPMID.keys())))
+# 	#Would need to split pmidsList in batch size
+# 	q="""SELECT pmid,abstract,firstauthor,mesh,da,title,journal,isreview,"geniaChunksList",titlechunk,query from "Publication" WHERE pmid=ANY(%s)"""
+# 	# q="""SELECT pmid,abstract,title,firstauthor,journal,da,isreview,query,"geniaChunksList",titlechunk FROM "Publication" WHERE pmid=ANY(%s)"""
+# 	conn=psycopg2.connect("dbname=th17 password=th17")
+# 	cur=conn.cursor()
+# 	cur.execute(q,(pubToFetch,))
+# 	# res=cur.fetchall()
+# 	publications=[]
+# 	for r in cur:
+# 		kvPairs=[]
+# 		kvPairs.append(("pmid",r[0]))
+# 		# kvPairs.append(("abstract",r[1]))
+# 		kvPairs.append(("authors",eval("["+r[2][1:-1]+"]")))
+# 		kvPairs.append(("mesh",r[3]))
+# 		kvPairs.append(("da",r[4]))
+# 		kvPairs.append(("title",r[5])) 
+# 		kvPairs.append(("journal",r[6])) # may need to build a journal class
+# 		kvPairs.append(("isreview",r[7])) # may need to parse a bool
+# 		kvPairs.append(("query",r[10])) # may need to split 
+# 		if use_genia:
+# 			chunks=eval(r[8])
+# 			tchunks=eval(r[9])
+# 			words,entities,genes=[],[],[]
+# 			for c in chunks:
+# 				words.extend([x.lower() for x in c[1]])
+# 				entities.extend([x.lower() for x in c[2]])
+# 				genes.extend([x.upper() for x in c[4]])
+# 			for c in tchunks:
+# 				words.extend([x.lower() for x in c[1]])
+# 				entities.extend([x.lower() for x in c[2]])
+# 				genes.extend([x.upper() for x in c[4]])
+# 			kvPairs.append(("entities",entities))
+# 			kvPairs.append(("genes",genes))
+# 			kvPairs.append(("tokens",words+entities+genes))
+# 		else:
+# 			kvPairs.append(("tokens",utils.simple_preprocess(r[5])+utils.simple_preprocess(r[1])))
 
-		_GLOBALPUBLICATIONTOPMID[r[0]]=Publication(kvPairs)
+# 		_GLOBALPUBLICATIONTOPMID[r[0]]=Publication(kvPairs)
 
-	return [_GLOBALPUBLICATIONTOPMID[p] for p in pmidsList if p in _GLOBALPUBLICATIONTOPMID]
+# 	return [_GLOBALPUBLICATIONTOPMID[p] for p in pmidsList if p in _GLOBALPUBLICATIONTOPMID]
 
 def tokenize_text(text,use_stemmer=True):
 	##UTF-8 deencode
@@ -399,6 +375,9 @@ def describe_features(use_genia=True,use_mesh=True,use_stemmer=True):
 	return features
 
 def publications_for_pmids(pmidsList,use_genia=True,use_mesh=True,use_stemmer=True,features_only=False):
+	import psycopg2
+	conn=psycopg2.connect("dbname=th17 password=th17")
+
 	pubToFetch=list(set(pmidsList).difference(set(_GLOBALPUBLICATIONTOPMID.keys())))
 	#Would need to split pmidsList in batch size
 	q="""SELECT pmid,medrecord,"geniaChunksList",titlechunk from "Publication" WHERE pmid=ANY(%s)"""
@@ -476,6 +455,9 @@ def publications_with_token(tok):
 
 
 def gene_annotations_for_pmid(pmid):
+	import psycopg2
+	conn=psycopg2.connect("dbname=th17 password=th17")
+
 	cur=conn.cursor()
 	cur.execute("SELECT na FROM textannotation INNER JOIN concept co ON(co.id=textannotation.concept_id) WHERE docid=%s",(pmid,))
 	genes=set()

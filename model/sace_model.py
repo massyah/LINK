@@ -2,6 +2,12 @@ SPECIES="yeast"
 VERSION="v9.0"
 ALIASESVERSION=""+VERSION
 
+import os,sys 
+LINKROOT=os.path.split(os.path.dirname(os.path.realpath(__file__)))[0]
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger 
+
 from model import *
 import pubmed_to_pg 
 import cPickle
@@ -18,11 +24,11 @@ xp_type_to_filter=[
  #    'Affinity Capture-MS',
  #    'Reconstituted Complex',
    # 'Protein-RNA', 
-   
+ 
 ]
 
 def extract_sgd_pmids():
-	sgd_db=[x.strip().split("\t") for x in open("../datasets/sgd_curation_literature_interaction_data.tab").readlines()]
+	sgd_db=[x.strip().split("\t") for x in open(LINKROOT+"/datasets/sgd_curation_literature_interaction_data.tab").readlines()]
 	pmids=[x[10].split("|") for x in sgd_db]
 	sgd_pmids=set()
 	for p in pmids:
@@ -35,7 +41,7 @@ def extract_sgd_pmids():
 
 def build_sgd_interactome(filter_orfs=True,remove_self_edges=True):
 	global official_to_systematic
-	sgd_db=[x.strip().split("\t") for x in open("../datasets/sgd_curation_literature_interaction_data.tab").readlines()]
+	sgd_db=[x.strip().split("\t") for x in open(LINKROOT+"/datasets/sgd_curation_literature_interaction_data.tab").readlines()]
 	official_to_systematic={}
 	interactome=AnnotatedGraph()
 
@@ -83,7 +89,7 @@ def build_sgd_interactome(filter_orfs=True,remove_self_edges=True):
 	return interactome
 
 
-#Process the corpus, once only
+#Process the corpus, Run once only
 def sgd_store_medline_entries():
 	conn=psycopg2.connect("dbname=th17 password=th17")
 	cur=conn.cursor()
@@ -103,7 +109,7 @@ def sgd_store_medline_entries():
 
 def build_and_save_sace_corpus(num_topics=500,use_genia=True,use_mesh=True,use_stemmer=True,test_only=False):
 
-	fname="../corpus/sgd_corpus_64_new_token_%d_%d_%d_%d"%(num_topics,use_genia,use_mesh,use_stemmer)
+	fname=LINKROOT+"/corpus/sgd_corpus_64_new_token_%d_%d_%d_%d"%(num_topics,use_genia,use_mesh,use_stemmer)
 
 	backgroundpmids=set()
 	backgroundpmids.update(extract_sgd_pmids())
@@ -126,9 +132,9 @@ def build_and_save_sace_corpus(num_topics=500,use_genia=True,use_mesh=True,use_s
 
 def load_sace_corpus(num_topics=500,with_genia=True,with_mesh=True,with_stemmer=True):
 	if with_genia==-1:
-		fname="../corpus/sace_corpus_%d.dat"%(num_topics)
+		fname=LINKROOT+"/corpus/sace_corpus_%d.dat"%(num_topics)
 	else:
-		fname="../corpus/sgd_corpus_64_new_token_%d_%d_%d_%d.dat"%(num_topics,with_genia,with_mesh,with_stemmer)
+		fname=LINKROOT+"/corpus/sgd_corpus_64_new_token_%d_%d_%d_%d.dat"%(num_topics,with_genia,with_mesh,with_stemmer)
 
 	f=open(fname)
 	lsiLogEntMediumCorpus=cPickle.load(f)
