@@ -21,7 +21,7 @@ from operator import itemgetter
 from plot_count_curve import *
 from helpers import *
 
-from  annotated_graph import AnnotatedGraph
+from  annotated_graph import *
 
 import random
 

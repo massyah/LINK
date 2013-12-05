@@ -5,9 +5,20 @@ sys.path.append(LINKROOT+"/helpers")
 sys.path.append(LINKROOT+"/model")
 from link_logger import logger 
 
+USE_DB=False
+
 import collections
 import networkx as nx
 
+
+def _write_networks_to_file():
+	g1=AnnotatedGraph()
+	g1.load_HPRDNPInteractome()
+	nx.write_gpickle(g1,LINKROOT+"/datasets/HPRDNPInteractome.gPickle")
+
+	g2=AnnotatedGraph()
+	g2.load_HPRDOnlyInteractome()
+	nx.write_gpickle(g2,LINKROOT+"/datasets/HPRDInteractome.gPickle")
 
 class AnnotatedGraph(nx.Graph):
 	"""docstring for AnnotatedGraph"""
@@ -17,21 +28,40 @@ class AnnotatedGraph(nx.Graph):
 	@classmethod
 	def build_HPRDOnlyInteractome(cls):
 		if not cls.HPRDOnlyInteractome:
-			cls.HPRDOnlyInteractome=AnnotatedGraph()
-			cls.HPRDOnlyInteractome.build_from_db("SELECT i1,i2,refs,source FROM binaryinteraction WHERE i1!='-' and i2!='-' and (source LIKE 'HPRD%')","HPRD Only interactome")
+			if USE_DB:
+				cls.HPRDOnlyInteractome=AnnotatedGraph()
+				cls.HPRDOnlyInteractome.load_HPRDOnlyInteractome()
+			else:
+				logger.info("Reloading network from file")
+				cls.HPRDNPInteractome=nx.read_gpickle(LINKROOT+"/datasets/HPRDInteractome.gPickle")
+
 		return cls.HPRDOnlyInteractome
 
 	@classmethod
 	def build_HPRDNPInteractome(cls):
 		if not cls.HPRDNPInteractome:
-			cls.HPRDNPInteractome=AnnotatedGraph()
-			cls.HPRDNPInteractome.build_from_db("SELECT i1,i2,refs,source FROM binaryinteraction WHERE i1!='-' and i2!='-' and (source LIKE 'HPRD%' OR source LIKE 'NETPATH%')","HPRD+NP Interactome")
+			if USE_DB:
+				cls.HPRDNPInteractome=AnnotatedGraph()
+				cls.HPRDNPInteractome.load_HPRDNPInteractome()
+			else:
+				logger.info("Reloading network from file")
+				cls.HPRDNPInteractome=nx.read_gpickle(LINKROOT+"/datasets/HPRDNPInteractome.gPickle")
 		return cls.HPRDNPInteractome
+
+
 
 	def __init__(self):
 		super(AnnotatedGraph, self).__init__()
 		self.doc_to_edge=collections.defaultdict(set)
 		self.interaction_list=[] ## TODO: Useless, should be removed
+
+	def load_HPRDOnlyInteractome(self):
+		logger.info("Rebuilding HPRD only interactome from DB")
+		self.build_from_db("SELECT i1,i2,refs,source FROM binaryinteraction WHERE i1!='-' and i2!='-' and (source LIKE 'HPRD%')","HPRD Only interactome")
+
+	def load_HPRDNPInteractome(self):
+		logger.info("Rebuilding HPRD+NP interactome from DB")
+		self.build_from_db("SELECT i1,i2,refs,source FROM binaryinteraction WHERE i1!='-' and i2!='-' and (source LIKE 'HPRD%' OR source LIKE 'NETPATH%')","HPRD+NP Interactome")
 
 	def _update_doc_to_edges(self):
 		self.doc_to_edge=collections.defaultdict(set)
