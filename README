@@ -1,1 +1,12 @@
 LINK: Latent Inference of NetworKs
+========================================
+
+LINK is a tool to infer and analyze networks reprensenting signaling pathways. LINK is based on 
+1. a _background interactome_ (a network of all known PPIs)
+2. _a corpus_: the textual content of published documents annotating the PPIs of the interactome
+
+To infer networks, LINK receives as input _a seed_, conisting of a starting seed of proteins and/or description of interactions between them. Interactions can be provided either as 
+1. Edges from the backgroun interactome
+2. PMIDs corresponding to documents annotating PPI
+3. Free text 
+

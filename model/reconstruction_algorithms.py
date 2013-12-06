@@ -1,22 +1,68 @@
+# Global LINK folder location 
+import os,sys
+LINKROOT="../../"
+sys.path.append(LINKROOT+"/helpers")
+sys.path.append(LINKROOT+"/model")
+from link_logger import logger 
+
+
+
+from manuscript_parameters import * 
+
+
 import random
 import copy
 from subprocess import call
 import collections
-import psycopg2
+
 import sys
-import cPickle
+
 import scipy
 from numpy import dot
 import numpy
 from operator import itemgetter 
-import pylab
+
 import time
 import networkx as nx
 
 
 import model
-from IPython.core.debugger import Tracer; debug_here = Tracer()
 from helpers import *
+
+
+
+# Annotation filtering 
+
+def select_best_cluster_filtering(background,priorG,inputProt,return_all=False,reference_pw_for_stats=None):
+
+	doc_to_n_edges={}
+	ref_to_n_refs_other_edges=collections.defaultdict(list)
+	for e in priorG.edges(data=True):
+		for r in e[2]["refs"]:
+			ref_to_n_refs_other_edges[r].append(len(e[2]["refs"]))
+
+	for r in priorG.references():
+		g=background.subgraph_for_references([r])
+		Ni=g.number_of_edges()
+		Np=g.number_of_nodes()
+		Npc=len(set(g.nodes()).intersection(inputProt))
+		doc_to_n_edges[r]=Npc
+		doc_to_n_edges[r]=Npc*1.0/Np
+		if reference_pw_for_stats:
+			rnc=len(set(g.nodes()).intersection(reference_pw_for_stats.nodes()))
+			re=len(set(g.sorted_edges()).intersection(reference_pw_for_stats.sorted_edges()))
+			# print r,Ni,Np,Npc,Npc*1.0/Np,rnc,re,ref_to_n_refs_other_edges[r]
+		else:
+			# print r,Ni,Np,Npc,Npc*1.0/Np,ref_to_n_refs_other_edges[r]
+			pass
+	doc_to_n_edges=sorted(doc_to_n_edges.items(),key=itemgetter(1),reverse=True)
+	# select above FILTER_THR
+	docs=[x[0] for x in doc_to_n_edges if x[1]>FILTER_THR]
+	docs_2=set(priorG.references()).difference(docs)
+	return docs,[docs,docs_2]
+
+
+
 
 def rocSimGraph(simModel,seed,reference_pathway,background,stop_at=-1,niter=5,bunch_size=20,neighborhood=4,use_graph=None,combine_graph=None,combine_weight=1.0,seed_graph=None,force_nodes=[],verbose=False,MERGE_COMPLEXES=False,DOC_SIM=None,AGGREGATE_WITH=max,intermediate_graph_threshold=[],add_edges_to_seed_graph=True,score_all_background=False,SCAFFOLD=None,build_seed_from_references=True):
 	if not SCAFFOLD:
@@ -85,8 +131,6 @@ def rocSimGraph(simModel,seed,reference_pathway,background,stop_at=-1,niter=5,bu
 		for eIdx in selected_edges_indices:
 			e=scored_edges[eIdx]
 			edges_to_add.append((e[0],e[1],{"refs":e[2]["refs"],"confidence":e[2]["confidence"]}))
-		if len(edges_to_add)==0:
-			debug_here()
 
 		for e in edges_to_add:
 			seed_graph.add_edge(e[0],e[1],e[2])
@@ -404,7 +448,7 @@ def build_from_random_nodes_and_refs(lsi,background,weighted_graph,combine_with,
 def mst_of_g(g,terminals,verbose=False,weighted=True,cutoff=7,return_gL=False,bidir=False):
 	STARTTIME=time.time()
 	if verbose:
-		print "Starting MST construction"
+		logger.info("Starting MST construction")
 		sys.stdout.flush()
 
 	STARTTIME=time.time()
@@ -415,7 +459,7 @@ def mst_of_g(g,terminals,verbose=False,weighted=True,cutoff=7,return_gL=False,bi
 		src=terminals[i]
 		if src not in g:
 			if verbose:
-				print src,"not in g"
+				logger.info("Node %s not in g"%(src))
 			continue
 		if weighted:
 			costs,paths=nx.single_source_dijkstra(g, src, weight='weight',cutoff=cutoff)
@@ -433,15 +477,15 @@ def mst_of_g(g,terminals,verbose=False,weighted=True,cutoff=7,return_gL=False,bi
 			tgt=terminals[j]
 			if tgt not in paths:
 				if verbose:
-					print "no paths between",src,tgt
+					logger.info("no paths between %s and %s"%(src,tgt))
 				continue
 			shortest_network.add_path(paths[tgt])
 			gLedges.append((src,tgt,{'weight':costs[tgt],'path':paths[tgt]}))
 		if verbose:
-			print "Done",src,"to go:",len(terminals)-i
+			logger.info("Done %s. Still %d to go"%(src,len(terminals)-i))
 			sys.stdout.flush()			
 	if verbose:
-		print "Computed Metric closure,",time.time() - STARTTIME,"seconds"
+		logger.info("Computed Metric closure in %f seconds"%(time.time() - STARTTIME))
 		STARTTIME=time.time()
 		sys.stdout.flush()			
 	gL=nx.Graph()
@@ -449,7 +493,7 @@ def mst_of_g(g,terminals,verbose=False,weighted=True,cutoff=7,return_gL=False,bi
 	# Min spanning Tree
 	tL=nx.minimum_spanning_tree(gL)
 	if verbose:
-		print "Computed Min spanning tree,",time.time() - STARTTIME,"seconds"
+		logger.info("Computed Min spanning tree in %f seconds"%(time.time() - STARTTIME))
 		STARTTIME=time.time()
 		sys.stdout.flush()	
 

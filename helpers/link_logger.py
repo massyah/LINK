@@ -15,7 +15,7 @@ def get_logger(name):
 		now = datetime.datetime.now()
 		handler=logging.StreamHandler()
 
-		formatter = logging.Formatter('%(asctime)s %(levelname)s - %(filename)s - %(funcName)s %(message)s')
+		formatter = logging.Formatter('%(asctime)s %(levelname)s - %(filename)s - %(funcName)s -  %(message)s')
 		handler.setFormatter(formatter)
 		logger.addHandler(handler)
 		__loggers.update(dict(name=logger))

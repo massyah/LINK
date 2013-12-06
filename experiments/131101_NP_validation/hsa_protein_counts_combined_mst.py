@@ -48,38 +48,6 @@ from manuscript_parameters import *
 
 verbose_inference=True
 
-# STRING_W=0.30
-# FILTER_THR=0.5
-
-# WITH_COMBINED_MST=True
-# SCORE_WITH_PROT=False
-# MST_SCORE_LSI_WEIGHT=100000 # Only if SCORE_WITH_PROT
-# MST_ON_HPRD_WEIGHTED=True
-# MST_ON_HPRD=True
-# STRING_MST_W=10 
-
-
-# if 'THREAD_ID' not in globals():
-# 	print 'using default THREAD_ID'
-THREAD_ID=os.getpid()
-
-# FROM Sace 
-STRING_W=0.30
-FILTER_THR=0.45 #120, 100, 28, 60
-USE_CLUSTERING=False
-BUNCH_SIZE=10
-WITH_COMBINED_MST=True
-MST_SCORE_LSI_WEIGHT=100000
-SCORE_WITH_PROT=False
-MST_ON_HPRD=True
-MST_ON_HPRD_WEIGHTED=True
-BACKGROUND_DEFAULT_WEIGHT=1
-STRING_MST_W=0.001
-STRING_DEFAULT_SCORE=10
-FILTER_THR_AVG_ANNOT=2.1
-USE_STRING_THR=-1 # Number of edges after wich we dot not combine with STRING. -1 to always combine
-
-BACKGROUND_CONTAINS_NP=False
 
 all_task=[]
 
@@ -247,33 +215,6 @@ def select_best_cluster(priorG,inputProt,return_all=False,clusters=None):
 		return best_cc
 
 
-def select_best_cluster_filtering(priorG,inputProt,return_all=False,reference_pw_for_stats=None):
-
-	doc_to_n_edges={}
-	ref_to_n_refs_other_edges=collections.defaultdict(list)
-	for e in priorG.edges(data=True):
-		for r in e[2]["refs"]:
-			ref_to_n_refs_other_edges[r].append(len(e[2]["refs"]))
-
-	for r in priorG.references():
-		g=background.subgraph_for_references([r])
-		Ni=g.number_of_edges()
-		Np=g.number_of_nodes()
-		Npc=len(set(g.nodes()).intersection(inputProt))
-		doc_to_n_edges[r]=Npc
-		doc_to_n_edges[r]=Npc*1.0/Np
-		if reference_pw_for_stats:
-			rnc=len(set(g.nodes()).intersection(reference_pw_for_stats.nodes()))
-			re=len(set(g.sorted_edges()).intersection(reference_pw_for_stats.sorted_edges()))
-			# print r,Ni,Np,Npc,Npc*1.0/Np,rnc,re,ref_to_n_refs_other_edges[r]
-		else:
-			# print r,Ni,Np,Npc,Npc*1.0/Np,ref_to_n_refs_other_edges[r]
-			pass
-	doc_to_n_edges=sorted(doc_to_n_edges.items(),key=itemgetter(1),reverse=True)
-	# select above FILTER_THR
-	docs=[x[0] for x in doc_to_n_edges if x[1]>FILTER_THR]
-	docs_2=set(priorG.references()).difference(docs)
-	return docs,[docs,docs_2]
 
 def select_best_cluster_filtering_by_edge(priorG,inputProt,max_doc_per_edge,min_specificity_per_doc,return_all=False,reference_pw_for_stats=None):
 	docs=set()
@@ -544,7 +485,7 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 		avg_n_annotations=scipy.average(sorted(map(lambda x:len(x[2]["refs"]), prior_graph.edges(data=True))))
 		print "Avg annotation",avg_n_annotations
 		if avg_n_annotations >= FILTER_THR_AVG_ANNOT:
-			best_cluster_filter,clusters_filter=select_best_cluster_filtering(prior_graph,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
+			best_cluster_filter,clusters_filter=recalg.select_best_cluster_filtering(background,prior_graph,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
 			
 			print "best %d clusters_filter (out of %d), no combination"%(len(best_cluster_filter),len(prior_graph.references()))
 			rp500CCF,cp500CCF=recalg.rocSimGraph(lsi,best_cluster_filter,reference_pw,local_hprd,SCAFFOLD=local_hprd,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=None,combine_weight=None, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
@@ -559,7 +500,7 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 		avg_n_annotations_string=scipy.average(sorted(map(lambda x:len(x[2]["refs"]), prior_graph_with_STRING.edges(data=True))))
 		print "[STRING] Avg annotation",avg_n_annotations_string
 		if avg_n_annotations_string >= FILTER_THR_AVG_ANNOT:
-			best_cluster_filter_with_STRING,clusters_filter=select_best_cluster_filtering(prior_graph_with_STRING,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
+			best_cluster_filter_with_STRING,clusters_filter=recalg.select_best_cluster_filtering(background,prior_graph_with_STRING,prior_prots,return_all=True,reference_pw_for_stats=reference_pw)
 			print "best %d clusters_filter (out of %d), combined with STRING"%(len(best_cluster_filter_with_STRING),len(prior_graph_with_STRING.references()))
 			rp500CCFString,cp500CCFString=recalg.rocSimGraph(lsi,best_cluster_filter_with_STRING,reference_pw,local_hprd_with_STRING,SCAFFOLD=local_hprd_with_STRING,neighborhood=neighborhood,stop_at=stop_at,bunch_size=BUNCH_SIZE,niter=4000,combine_graph=STRING,combine_weight=STRING_W, AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph_with_STRING,score_all_background=store,intermediate_graph_threshold=INTERMEDIATE_THR,build_seed_from_references=True)
 		else:
@@ -638,88 +579,9 @@ def rec_with_vec(reference_pw,stop_at=1000,seed_prot_percent=0.25,seed_doc_perce
 
 		return cp500All,cp500AllString,rp500All,rp500AllString,mst_graph
 
-		# best_cc_res=(rp,cp,rp500,cp500)
-		# print cp[-1],cp500[-1]
-	#score resulting graph, with merge/wo merge
-	# helpers.print_score(best_cc_res[0],reference_pw)
-	# helpers.print_score(best_cc_res[0],reference_pw,use_merged_complexes=True)
-	# helpers.print_score(best_cc_res[2],reference_pw)
-	# helpers.print_score(best_cc_res[2],reference_pw,use_merged_complexes=True)
 
-# def store_counts(cp,reference_pw,scaffold,prior_refs,prior_prots,with_string,opt_tag=""):
-# 	
-	# if store:
-	# 	# store_counts(cp500All,reference_pw,local_hprd,prior_refs,prior_prots,with_string=False,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
-	# 	# store_counts(cp500AllString,reference_pw,local_hprd,prior_refs,prior_prots,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="")
-	# 	if cp500CCFString:
-	# 		# store_counts(cp500CCString,reference_pw,local_hprd,prior_refs,prior_prots,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="CC")
-	# 		store_counts(cp500CCFString,reference_pw,local_hprd,prior_refs,prior_prots,with_string=True,opt_tag=opt_tag,prior_scores=prior_scores,cluster_type="CCF")
-
-	
-	# return best_cc_res
-
-
-def string_with_vec(reference_pw):
-	print "Building for",reference_pw.name
-	if reference_pw.name in bowTieInput:
-		prior_prots=bowTieInput[reference_pw.name]
-	else:
-		prior_prots=random.sample(reference_pw.node,20)
-
-	random.shuffle(prior_prots)
-	print "shuffled to ",prior_prots
-	## We tokenize the input prots
-	prior_prots_v=lsi.tokens_to_vec(prior_prots)
-
-	## STRING prior is then
-	prior_graph=recalg.mst_of_g(STRING,prior_prots,weighted=True,verbose=verbose_inference,bidir=True,cutoff=100)
-	recalg.annotate_graph(background,prior_graph,4)
-	print "PRIOR:",helpers.score_graph(prior_graph,reference_pw)
-
-	all_refs=prior_graph.references()
-	rp,cp=recalg.rocSimGraph(lsi,all_refs,reference_pw,background,neighborhood=4,stop_at=80,bunch_size=10,niter=1000,combine_graph=STRING,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph)
-	print "!",cp[-1]
-	best_cluster,clusters=select_best_cluster(prior_graph,prior_prots,return_all=True)
-
-
-	## Rec for all clusters
-	for cc in clusters:
-		cluster_v=lsi.pmids_to_vec(cc)
-		sim_with_input_prot=dot(prior_prots_v,cluster_v.T)
-		all_sims=[]
-		for ref in cc:
-			all_sims.append(dot(prior_prots_v,precomputed_for_pmid(ref)))
-
-		rp,cp=recalg.rocSimGraph(lsi,cc,reference_pw,background,neighborhood=4,stop_at=80,bunch_size=10,niter=1000,combine_graph=STRING,combine_weight=STRING_W,AGGREGATE_WITH=max,verbose=verbose_inference,seed_graph=prior_graph)
-		reference_graph=background.subgraph_for_references(cc)
-		from_input=set(reference_graph.nodes()).intersection(set(prior_prots))
-		N=len(from_input)
-		if len(reference_graph.nodes()):
-			R=N*1.0/len(reference_graph.nodes())
-		else:
-			R=-1
-
-		if cc==best_cluster:
-			print "*",cp[-1],sim_with_input_prot,N,R,scipy.mean(all_sims),max(all_sims),scipy.sum(all_sims),len(cc)
-		else:
-			print " ",cp[-1],sim_with_input_prot,N,R,scipy.mean(all_sims),max(all_sims),scipy.sum(all_sims),len(cc)
 
 def generate_np_results_for_rec_figure(nrep=30):
-	# for pw in [hsa04010,hsa04012]:
-	# 	for doc_perc in [-1, 0, 0.10]:
-	# 		for prot_perc in [-1,0,0.10]:
-	# 			if doc_perc==0 and prot_perc==0:
-	# 				continue
-	# 			if (doc_perc==-1) and (prot_perc==-1):
-	# 				#only 2 replicates
-	# 				rec_with_vec(pw,seed_prot_percent=prot_perc,seed_doc_percent=doc_perc)
-	# 				rec_with_vec(pw,seed_prot_percent=prot_perc,seed_doc_percent=doc_perc)
-	# 				continue
-
-	# 			for i in range(nrep):
-	# 				print "---"*12,pw.name,i,doc_perc,prot_perc
-	# 				sys.stdout.flush()
-	# 				rec_with_vec(pw,seed_prot_percent=prot_perc,seed_doc_percent=doc_perc)
 	for pw in [2,4,7,9,11,14]:
 		for doc_perc in [0,5,10,0.25,0.50]:
 			for prot_perc in [0,15,0.25,0.50]:
