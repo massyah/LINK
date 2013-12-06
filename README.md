@@ -24,7 +24,6 @@ Two example reconstructions are provided in the [experiments](experiments) foler
 Results for the example Il-2 reconstruction provided with the code are :
 
 |     Tag      | Edges | TP Edges | REF Edges |   Edges Prec   |   Edges Recall  | Nodes | TP Nodes | REF Nodes |   Nodes Prec   |  Nodes Recall  |
------
 |     MST      |   9   |    7     |     96    | 0.777777777778 | 0.0729166666667 |   10  |    10    |     43    |      1.0       | 0.232558139535 |
 | Expanded 20  |   20  |    16    |     96    |      0.8       |  0.166666666667 |   15  |    15    |     43    |      1.0       | 0.348837209302 |
 | Expanded 20  |   20  |    16    |     96    |      0.8       |  0.166666666667 |   15  |    15    |     43    |      1.0       | 0.348837209302 |
