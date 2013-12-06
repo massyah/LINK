@@ -17,13 +17,15 @@ An overview of LINK is given in the next figure :
 
 
 
-Two example reconstructions are provided in the [experiments](experiments) foler:
-1. Cisplating network [experiments/131202_Daniel_Cisplatin_network/build_cisplatin_network.py](build_cisplatin_network.py)
+Two example reconstructions are provided in the [experiments](experiments) folder:
+
+1. [Cisplatin network](experiments/131202_Daniel_Cisplatin_network/build_cisplatin_network.py)
 2. [IL-2 reconstruction](experiments/131205_examples_for_BioInformatics/rebuild_IL2.py) (compared to the NetPath reference pathway)
 
 Results for the example Il-2 reconstruction provided with the code are :
 
 |     Tag      | Edges | TP Edges | REF Edges |   Edges Prec   |   Edges Recall  | Nodes | TP Nodes | REF Nodes |   Nodes Prec   |  Nodes Recall  |
+| ------------- |:-------------:| -----:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
 |     MST      |   9   |    7     |     96    | 0.777777777778 | 0.0729166666667 |   10  |    10    |     43    |      1.0       | 0.232558139535 |
 | Expanded 20  |   20  |    16    |     96    |      0.8       |  0.166666666667 |   15  |    15    |     43    |      1.0       | 0.348837209302 |
 | Expanded 20  |   20  |    16    |     96    |      0.8       |  0.166666666667 |   15  |    15    |     43    |      1.0       | 0.348837209302 |
